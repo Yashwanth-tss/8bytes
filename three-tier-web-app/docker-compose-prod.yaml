@@ -1,0 +1,40 @@
+# ==== For Production works ======
+
+services:
+  # db:
+  #   image: ${DB_image_name}
+  #   container_name: quotes-db
+  #   environment:
+  #     POSTGRES_DB: ${DB_NAME:-quotesdb}
+  #     POSTGRES_USER: ${DB_USER:-user}
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+  #   volumes:
+  #     - db-data:/var/lib/postgresql/data
+
+  api:
+    image: ${API_image_name}
+    container_name: quotes-api
+    # depends_on:
+    #   - db
+    environment:
+      DB_HOST: ${DB_HOST:-db}
+      DB_USER: ${DB_USER:-user}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      DB_NAME: ${DB_NAME:-quotesdb}
+      DB_PORT: ${DB_PORT:-5432}
+    ports:
+      - "5001:5001"
+
+  app:
+    image: ${APP_image_name}
+    container_name: quotes-frontend
+    depends_on:
+      - api
+    environment:
+      API_URL: ${API_URL:-http://api:5001}
+    ports:
+      # - "80:5000" # for beanstalk
+      - "${FRONTEND_PORT:-80}:5002"
+
+volumes:
+  db-data:
