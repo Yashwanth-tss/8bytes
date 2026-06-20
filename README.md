@@ -77,7 +77,7 @@ Before starting the application intilize the database using
 
 Configure the environment variables similar to `.env.example` file 
 
-###### Start the containers using
+#### Start the containers using
 ```docker compose -f docker-compose-prod.yml up -d```
 
 ## CI/CD Pipeline
@@ -89,28 +89,28 @@ The pipeline is consisting of 3 jobs
 2. Build and Push to ECR
 3. Deploy to Staging EC2 via SSH
 
-###### Run tests
+#### Run tests
 
 This is lint and test stage for validating the code and dependencies. I have added dummy unit tests for this application. In real world, this stage will be used to run the unit tests and integration tests for the application. Example, if using node - npm run test; npm run lint. 
 
 Trigger : When new PR is <b>raised</b> to main. <br>
 File : test.yml
 
-###### Build and Push to ECR
+#### Build and Push to ECR
 This pipeline will have the job to checkout to the latest branch, build the docker images, scan the images using trivy for vulnerability and push to ECR only if passes the scan. 
 
 Trigger : When new PR is <b>merged</b> to main. <br>
 File : deploy.yml <br>
 Job name : build-and-push
 
-###### Deploy to Staging EC2 via SSH
+#### Deploy to Staging EC2 via SSH
 Once the images are pushed, it will proceed the deploy job, which will login to the staging EC2 instance using SSH and deploy the application. 
 
 File : deploy.yml <br>
 Job name : deploy-staging 
 
-###### Deploy to production EC2
-TO reduce the provisioning of extra infrastructure, I have created a manual intervention job assuming to be deploying in production environment similar to our staging. This will be triggered by manual approval from any of environment reviewers. 
+#### Deploy to production EC2
+To reduce the provisioning of extra infrastructure, I have created a manual intervention job assuming to be deploying in production environment similar to our staging. This will be triggered by manual approval from any of environment reviewers. 
 
 File : deploy.yml <br>
 Job name : deploy-production
