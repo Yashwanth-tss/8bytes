@@ -1,0 +1,124 @@
+name: Build and Push to ECR
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'three-tier-web-app/**'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Scan repository for dependency vulnerabilities (SCA)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'fs'
+          scan-ref: './three-tier-web-app'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # --- API Service ---
+      - name: Build API Docker Image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: assignment-api-ecr
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest ./three-tier-web-app/api
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest assignment-api:latest
+
+      - name: Scan API Image for vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: 'assignment-api:latest'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      - name: Push API Image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: assignment-api-ecr
+        run: |
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      # --- Frontend App Service ---
+      - name: Build Frontend Docker Image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: assignment-app-ecr
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest ./three-tier-web-app/app
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest assignment-app:latest
+
+      - name: Scan Frontend Image for vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: 'assignment-app:latest'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      - name: Push Frontend Image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: assignment-app-ecr
+        run: |
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+  deploy-staging:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Staging EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # Navigate to the project directory
+            cd ~/8bytes/three-tier-web-app
+
+            # Login to Amazon ECR
+            aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com
+
+            # Pull the latest ECR images
+            docker compose -f docker-compose-prod.yaml pull
+
+            # Recreate and run containers with new images
+            docker compose -f docker-compose-prod.yaml up -d --force-recreate
+
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    # This environment keyword connects the job to GitHub Environments where you can set "Required Reviewers" for manual approval
+    environment:
+      name: production
+    steps:
+      - name: Manual Approval Approved
+        run: |
+          echo "Production deployment approved and successfully executed!"
+          echo "This should have the similar steps as deploy-staging with production configuration but due to similicity I have provisioned one environment which will be considered as staging now."

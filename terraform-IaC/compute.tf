@@ -53,6 +53,7 @@ resource "aws_instance" "app_server" {
               sudo systemctl start docker
               sudo systemctl enable docker
               sudo usermod -aG docker ubuntu
+              sudo apt install postgresql-client
               EOF
   tags = {
     Name = "${var.environment}-app-instance"

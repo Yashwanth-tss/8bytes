@@ -61,5 +61,10 @@ now in EC2 instaces, pull the images and run the containers
 ```docker pull <your-ecr-account-id>.dkr.ecr.your-region.amazonaws.com/quotes-api:latest```
 ```docker pull <your-ecr-account-id>.dkr.ecr.your-region.amazonaws.com/quotes-frontend:latest```
 
+Before starting the application intilize the database using 
+```PGPASSWORD='your_password' psql -h <your-rds-endpoint> -U <your-db-username> -d <your-db-name> -f three-tier-web-app/db/init.sql```
+
+Configure the environment variables similar to `.env.example` file 
+
 Start the containers using
 ```docker compose up -d```

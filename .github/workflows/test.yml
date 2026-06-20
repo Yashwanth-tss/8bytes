@@ -1,0 +1,40 @@
+name: Test on PR
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'three-tier-web-app/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup python3
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install API dependencies
+        working-directory: three-tier-web-app/api
+        run: |
+          pip install -r requirements.txt
+
+      - name: Install Frontend dependencies
+        working-directory: three-tier-web-app/app
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run API Unit Tests
+        working-directory: three-tier-web-app/api
+        run: |
+          python -m unittest discover -s . -p "test_*.py"
+
+      - name: Run Frontend Unit Tests
+        working-directory: three-tier-web-app/app
+        run: |
+          python -m unittest discover -s . -p "test_*.py"

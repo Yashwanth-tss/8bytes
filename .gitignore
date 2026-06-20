@@ -1,0 +1,5 @@
+three-tier-web-app/.env
+
+terraform-IaC/.terraform
+terraform-IaC/*.pem
+terraform-IaC/.terraform.lock.hcl
