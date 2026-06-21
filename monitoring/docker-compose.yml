@@ -1,0 +1,98 @@
+version: "3" 
+ 
+networks: 
+  monitor-net: 
+    driver: bridge 
+ 
+volumes: 
+  prometheus_data: {} 
+  grafana_data: {}
+
+services:
+  prometheus: 
+    image: prom/prometheus:v2.38.0 
+    container_name: prometheus 
+    volumes: 
+      - ./prometheus:/etc/prometheus 
+      - prometheus_data:/prometheus 
+    command: 
+      - '--config.file=/etc/prometheus/prometheus.yml' 
+      - '--storage.tsdb.path=/prometheus' 
+      - '--storage.tsdb.retention.time=200h' 
+      - '--web.enable-lifecycle' 
+      - '--web.enable-remote-write-receiver'
+    ports: 
+      - 9090:9090 
+    networks:
+      - monitor-net 
+
+
+  cadvisor: 
+    image: gcr.io/cadvisor/cadvisor-amd64:v0.49.1 
+    container_name: cadvisor
+    ports: 
+      - 8080:8080 
+    volumes: 
+      - /:/rootfs:ro 
+      - /var/run:/var/run:rw 
+      - /sys:/sys:ro 
+      - /var/lib/docker/:/var/lib/docker:ro 
+    networks: 
+      - monitor-net 
+  
+  node-exporter: 
+    image: prom/node-exporter:v1.6.0 
+    container_name: node-exporter
+    ports: 
+      - 9100:9100 
+    volumes: 
+      - /proc:/host/proc:ro 
+      - /sys:/host/sys:ro 
+      - /:/rootfs:ro 
+    networks: 
+      - monitor-net
+
+  loki: 
+    image: grafana/loki:3.4.1 
+    container_name: loki
+    ports: 
+      - 3100:3100 
+    volumes: 
+      - ./loki-config.yaml:/etc/loki/local-config.yaml 
+    command: -config.file=/etc/loki/local-config.yaml
+    networks: 
+      - monitor-net 
+  
+  grafana-alloy:
+    image: grafana/alloy:v1.1.0
+    container_name: grafana-alloy
+    user: root
+    ports: 
+      - 8081:8081
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: run --server.http.listen-addr=0.0.0.0:8081 /etc/alloy/config.alloy
+    depends_on:
+      - prometheus
+      - loki
+    networks: 
+      - monitor-net
+  
+  grafana: 
+    image: grafana/grafana:latest 
+    container_name: grafana
+    ports: 
+      - 3000:3000 
+    volumes: 
+      - grafana_data:/var/lib/grafana 
+      - ./grafana/provisioning/datasources/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./grafana/provisioning/dashboards/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin 
+    depends_on: 
+      - prometheus 
+      - loki
+    networks: 
+      - monitor-net

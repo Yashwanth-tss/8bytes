@@ -1,0 +1,55 @@
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "logs_relabel" {
+  targets = discovery.docker.containers.targets
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+}
+
+loki.source.docker "default" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.docker.containers.targets
+  relabel_rules = discovery.relabel.logs_relabel.rules
+  forward_to    = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+prometheus.scrape "cadvisor" {
+  targets = [
+    { __address__ = "cadvisor:8080" },
+  ]
+  forward_to      = [prometheus.remote_write.local.receiver]
+  scrape_interval = "15s"
+}
+
+prometheus.scrape "node_exporter" {
+  targets = [
+    { __address__ = "node-exporter:9100" },
+  ]
+  forward_to      = [prometheus.remote_write.local.receiver]
+  scrape_interval = "15s"
+}
+
+prometheus.scrape "alloy" {
+  targets = [
+    { __address__ = "localhost:8081" },
+  ]
+  forward_to      = [prometheus.remote_write.local.receiver]
+  scrape_interval = "15s"
+}
+
+prometheus.remote_write "local" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
+  }
+}
