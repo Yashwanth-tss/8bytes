@@ -29,7 +29,7 @@ services:
 
 
   cadvisor: 
-    image: gcr.io/cadvisor/cadvisor-amd64:v0.49.1 
+    image: ghcr.io/google/cadvisor:latest
     container_name: cadvisor
     restart: unless-stopped
     ports: 
