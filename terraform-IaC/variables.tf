@@ -39,10 +39,16 @@ variable "app_port" {
   default     = 80
 }
 
+variable "grafana_port" {
+    description = "Port for the grafana"
+    type        = number
+    default     = 3000
+}
+
 variable "my_ip" {
   description = "My IP address"
   type        = string
-  default     = "[IP_ADDRESS]"
+  default     = "0.0.0.0/0"
 }
 
 variable "key_name" {

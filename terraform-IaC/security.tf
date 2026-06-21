@@ -33,6 +33,13 @@ resource "aws_security_group" "app_sg" {
   }
 
   ingress {
+    from_port   = var.grafana_port
+    to_port     = var.grafana_port
+    protocol    = "tcp"
+    cidr_blocks = [var.my_ip]
+  }
+
+  ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
