@@ -1,21 +1,23 @@
 # ==== For Production works ======
 
 services:
-  db:
-    image: ${DB_image_name}
-    container_name: quotes-db
-    environment:
-      POSTGRES_DB: ${DB_NAME:-quotesdb}
-      POSTGRES_USER: ${DB_USER:-user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
-    volumes:
-      - db-data:/var/lib/postgresql/data
+  # db:
+  #   image: ${DB_image_name}
+  #   container_name: quotes-db
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_DB: ${DB_NAME:-quotesdb}
+  #     POSTGRES_USER: ${DB_USER:-user}
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+  #   volumes:
+  #     - db-data:/var/lib/postgresql/data
 
   api:
     image: ${API_image_name}
     container_name: quotes-api
-    depends_on:
-      - db
+    restart: unless-stopped
+    # depends_on:
+    #   - db
     environment:
       DB_HOST: ${DB_HOST:-db}
       DB_USER: ${DB_USER:-user}
@@ -28,6 +30,7 @@ services:
   app:
     image: ${APP_image_name}
     container_name: quotes-frontend
+    restart: unless-stopped
     depends_on:
       - api
     environment:

@@ -19,13 +19,23 @@ consists of  VPC, Subnets, Route Tables, Gateways, Security Groups, RDS, EC2, EC
 - Docker
 
 ## Architecture
-The architecture consists of a VPC with two public and two private subnets.
-The public subnets host the Application Load Balancer and the EC2 instances.
-The private subnets host the RDS instance..
-The VPC is connected to the internet through an Internet Gateway.
-The Application Load Balancer is connected to the public subnets.
-The EC2 instance is connected to the public subnets.
-The RDS instance is connected to the private subnets.
+<img src="Application-architecture.png">
+
+The application consists of two private and two public subnets in a custom VPC. The Application Load Balancer and EC2 instance are placed in the public subnets and the RDS instance is placed in the private subnets.
+
+The ALB acts as the entry point to the application, it forwards the requests to the EC2 instance based on the path-based routing.
+
+The EC2 instance hosts the API and frontend applications.
+
+The RDS instance hosts the database.
+
+security groups: 
+ALB security - Will accept request from anywhere on port 80 as SSL is not configured. 
+EC2 security - Will accept traffic from ALB security group on port 80. 
+RDS security - Will accept traffic from EC2 security group on port 5432. 
+
+Architecture Justification:
+The EC2 instance is placed in public subnet as placing it in private subnet would require NAT gateway and setting up of SSM or bastion host to deploy the containers. 
 
 ### Infrastucture configuration steps
 Clone the repo 
@@ -56,7 +66,6 @@ From the application folder, three-tier-web-app
 
 #### Retag the images
 
-```docker tag quotes-db:latest <your-ecr-account-id>.dkr.ecr.your-region.amazonaws.com/quotes-db:latest``` <br>
 ```docker tag quotes-api:latest <your-ecr-account-id>.dkr.ecr.your-region.amazonaws.com/quotes-api:latest``` <br>
 ```docker tag quotes-frontend:latest <your-ecr-account-id>.dkr.ecr.your-region.amazonaws.com/quotes-frontend:latest```
 
@@ -72,7 +81,7 @@ now in EC2 instaces, pull the images and run the containers
 ```docker pull <your-ecr-account-id>.dkr.ecr.your-region.amazonaws.com/quotes-api:latest``` <br>
 ```docker pull <your-ecr-account-id>.dkr.ecr.your-region.amazonaws.com/quotes-frontend:latest``` <br>
 
-Before starting the application intilize the database using 
+Before starting the application initialize the database using 
 ```PGPASSWORD='your_password' psql -h <your-rds-endpoint> -U <your-db-username> -d <your-db-name> -f three-tier-web-app/db/init.sql```
 
 Configure the environment variables similar to `.env.example` file 
@@ -114,4 +123,24 @@ To reduce the provisioning of extra infrastructure, I have created a manual inte
 
 File : deploy.yml <br>
 Job name : deploy-production
+
+## Monitoring 
+I have setup the monitoring stack using prometheus, loki and grafana which will have the capability to get metrics and logs. 
+
+Why grafana and prometheus stack? 
+I have already worked on this stack and implemented the centralized logging and metrics collection.
+
+To start the monitoring stack, 
+go to monitoring directory and start the docker compose containers
+
+```cd monitoring``` </br>
+
+```docker compose up -d```
+
+grafana is being the presentation layer, you can access it using http://[IP_ADDRESS]:3000 if the port allowed. 
+
+I have elevated the use of ALB and end path based routing to go to the respective application. 
+
+
+### Documentation
 
