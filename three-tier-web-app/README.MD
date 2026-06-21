@@ -27,3 +27,4 @@ We then use Docker Compose to run all of the containers at once.
 2. I have decoupled the hardcoded values to variabled and placed in .env file
 3. Created a new docker compose setup for production which will use the ecr image for container instead of build images. Also, removed the DB images from the compose file as it will be hosted on RDS.
 4. .env file will be used for configuration and will be used by the docker-compose-prod.yml file
+
