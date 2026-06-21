@@ -2,6 +2,7 @@ name: Test on PR
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened]
     branches:
       - main
     paths:
@@ -38,3 +39,23 @@ jobs:
         working-directory: three-tier-web-app/app
         run: |
           python -m unittest discover -s . -p "test_*.py"
+
+      - name: Send email on failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.EMAIL_SERVER }}
+          server_port: ${{ secrets.EMAIL_PORT }}
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "GitHub Actions Failure: ${{ github.workflow }} (#${{ github.run_number }})"
+          to: ${{ secrets.EMAIL_RECIPIENT }}
+          from: "GitHub Actions <${{ secrets.EMAIL_USERNAME }}>"
+          body: |
+            Workflow "${{ github.workflow }}" failed in run #${{ github.run_number }}.
+            
+            Branch: ${{ github.head_ref || github.ref_name }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+            
+            View run details: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
