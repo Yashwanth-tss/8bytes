@@ -125,3 +125,27 @@ jobs:
         run: |
           echo "Production deployment approved and successfully executed!"
           echo "This should have the similar steps as deploy-staging with production configuration but due to similicity I have provisioned one environment which will be considered as staging now."
+
+  notify-failure:
+    needs: [build-and-push, deploy-staging, deploy-production]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send email on failure
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.EMAIL_SERVER }}
+          server_port: ${{ secrets.EMAIL_PORT }}
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "GitHub Actions Failure: ${{ github.workflow }} (#${{ github.run_number }})"
+          to: ${{ secrets.EMAIL_RECIPIENT }}
+          from: "GitHub Actions <${{ secrets.EMAIL_USERNAME }}>"
+          body: |
+            Workflow "${{ github.workflow }}" failed in run #${{ github.run_number }}.
+            
+            Branch: ${{ github.head_ref || github.ref_name }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+            
+            View run details: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
