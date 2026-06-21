@@ -20,6 +20,7 @@ We then use Docker Compose to run all of the containers at once.
 4. Open `localhost:5001/api/quotes` to see all the pre-populated sample quotes in a JSON format (assuming this is the first time you are running this).
 5. On another browser, navigate to `localhost:5002` to see the frontend layer - you can add a few quotes as well as seeing other quotes coming from the database.
 
+The DB is not required for the production setup as the RDS will take care of the DB.
 
 # DevOps updates
 
