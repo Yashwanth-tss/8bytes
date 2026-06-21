@@ -60,21 +60,6 @@ docker compose down -v
 ```
 *(The `-v` flag can be used if you need to wipe out the persistent Grafana/Prometheus database files and start fresh).*
 
-### Verify Logs & Metrics Ingestion
-You can verify that Alloy is correctly sending logs and metrics to Loki and Prometheus by querying their HTTP APIs:
-
-1. **Verify Loki has container log streams**:
-   ```bash
-   curl -s http://<instance-ip>:3100/loki/api/v1/label/container/values
-   ```
-   *Expected Output*: A JSON list containing your container names (e.g. `["quotes-api", "quotes-frontend", "quotes-db"]`).
-
-2. **Verify Prometheus has metrics**:
-   ```bash
-   curl -s http://<instance-ip>:9090/api/v1/label/__name__/values
-   ```
-   *Expected Output*: A JSON list containing standard Prometheus, cAdvisor, and Node Exporter metrics (e.g. `container_cpu_usage_seconds_total`, `node_cpu_seconds_total`).
-
 ---
 
 ## 3. Interacting with Grafana
