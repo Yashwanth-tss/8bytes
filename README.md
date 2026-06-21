@@ -139,8 +139,16 @@ go to monitoring directory and start the docker compose containers
 
 grafana is being the presentation layer, you can access it using http://[IP_ADDRESS]:3000 if the port allowed. 
 
-I have elevated the use of ALB and end path based routing to go to the respective application. 
-
 
 ### Documentation
+
+Improvement and Challenges documentation: https://docs.google.com/document/d/1saMPMJiyUl9Gs2TUS9L9iMvpomnRTvpO_IXa26GlPAQ/edit?usp=sharing    
+
+Approaches documentation: https://docs.google.com/document/d/1VmmOzqMbudD16bhxDvhSLYljlY3bwboiy7SJyAZTExI/edit?usp=sharing 
+
+The above document is structured and improved with AI. 
+
+## Endpoints 
+Load balancer: http://assignment-app-alb-781160304.ap-south-1.elb.amazonaws.com/ </br>
+Instance ip: http://13.126.254.81:3000/ (Only for monitoring using grafana)
 
