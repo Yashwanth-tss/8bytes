@@ -61,6 +61,20 @@ def add_quote():
     cursor.close()
     return jsonify({"id": quote_id, "quote": content, "author": author}), 201
 
+    
+@api.route("/api/getquotes", methods=["GET"])
+def get_quote():
+    author = request.json["author"]
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT quote, author FROM quotes WHERE author=%s)",
+        (author), 
+    )
+    quotes = cursor.fetchall()
+    cursor.close()
+    return jsonify([{"id": q[0], "quote": q[1], "author": q[2]} for q in quotes]), 200
+
 
 if __name__ == "__main__":
     # Use the PORT environment variable provided by Beanstalk, defaulting to 5001 for local development
